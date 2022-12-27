@@ -34,6 +34,12 @@ const connect = () => {
     else if (obj.type === 'leave') {
       document.getElementById('fromServer').innerHTML += `${obj.name}が退室しました！<br />`;
     }
+    else if (obj.type === 'typing') {
+      document.getElementById('typing').innerText = `${obj.name}が入力中です`;
+      setTimeout(()=>{
+        document.getElementById('typing').innerText = '';
+      }, 1000);
+    }   
   });
 
   // (5) サーバから切断されたときの処理を追加
@@ -67,6 +73,14 @@ const sendMessage = () => {
 
 // Enterキーでメッセージ送信
 document.getElementById('fromClient').addEventListener('change', sendMessage);
+
+// (7) タイピング送信処理
+const sendTyping = () => {
+  socket.emit('typing');
+};
+
+// キーボードタイピング中は typing イベント送信
+document.getElementById('fromClient').addEventListener('keypress', sendTyping);
 
 // (1) 入退室処理
 const enterLeaveRoom = () => {

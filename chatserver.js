@@ -84,7 +84,6 @@ io.on('connection', socket => {
     io.emit('chat message', req);
   });
 
-
   // (3) 退室時の処理を追加
   socket.on('disconnect', () => {
     console.log(`[WebSocket] disconnected from ${userName} (${ip})`);
@@ -96,6 +95,15 @@ io.on('connection', socket => {
     // 退室したクライアントを除く全ての入室中のクライアントへ送信
     socket.broadcast.emit('chat message', {
       type: 'leave',
+      name: userName,
+    });
+  });
+
+  // (4) タイピング中というイベントを処理
+  socket.on('typing', () => {
+    // 退室したクライアントを除く全ての入室中のクライアントへ送信
+    socket.broadcast.emit('chat message', {
+      type: 'typing',
       name: userName,
     });
   });
