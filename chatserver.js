@@ -38,7 +38,7 @@ io.on('connection', socket => {
 
     // メンバーを追加
   // 同じ名前のユーザが接続してきた場合には未対応
-  members[userName] = 1;
+  members[userName] = socket;
 
   console.log(`[WebSocket] connected from ${userName} (${ip})`);
   // 全ての入室中のクライアントへ送信
@@ -52,19 +52,22 @@ io.on('connection', socket => {
   // （受信したJSON文字列はオブジェクトへ自動的に変換）
   socket.on('chat message', req => {
     console.log('[WebSocket] message from client: ' + JSON.stringify(req));
-    
-    // bot宛か？
-    // まずbot宛かどうかを判定し、
-    // その後、メッセージ本文の内容で分岐します。
-    if (req.data.startsWith('@bot ')) {
-      const cmdArray = req.data.split(' ');
-      if (cmdArray.length > 1) {
+    let messageTo = '';
+    let message = req.data;
+    // 日本語の空白文字も加えておく
+    const match = /^@(.+)[ 　](.+)$/.exec(req.data);
+    if (match) {
+      messageTo = match[1];
+      message = match[2];
+    }
+
+    if (messageTo === 'bot') {
+      if (message !== ''){
         req.name = 'bot';
-        const cmd = cmdArray[1];
-        if (cmd === 'date') {
+        if (message === 'date') {
           req.data = Date();
         }
-        else if (cmd === 'list') {
+        else if (message === 'list') {
           req.data = '現在の入室者は ' + Object.keys(members).join(', ');
         }
         else {
@@ -80,8 +83,15 @@ io.on('connection', socket => {
     // bot宛でないメッセージの場合
     // 送信元のuserNameをnameプロパティを追加
     req.name = userName;
-    // 全ての入室中のクライアントへ返信
-    io.emit('chat message', req);
+
+    if(messageTo && members[messageTo]) {
+      // 指定クライアントへのみ転送
+      members[messageTo].emit('chat message', req);
+    }
+    else {
+      // 全ての入室中のクライアントへ転送
+      io.emit('chat message', req);
+    }
   });
 
   // (3) 退室時の処理を追加
