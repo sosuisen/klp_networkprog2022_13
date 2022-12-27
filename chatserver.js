@@ -24,49 +24,37 @@ server.listen({ host, port }, () => {
 
 const io = new Server(server);
 
-io.on('connection', socket => {
-  console.log('a user connected');
-})
-
-/*
 const members = {};
-ws.on('connection', (socket, req) => {
+io.on('connection', socket => {
   // （１）入室時の処理
-  const ip = req.socket.remoteAddress;
+  const ip = socket.handshake.address;
   // ユーザ名を取得
-  const urlArray = req.url.split('?');
-  let userName = '';
-  if (urlArray.length > 1) {
-    userName = decodeURIComponent(urlArray[1]);
-  }
-  else {
-    socket.terminate();
+  const userName = socket.handshake.query.userName;
+  if (userName === undefined || userName === "") {
+    console.log('Disconnected: User name not found.');
+    socket.disconnect(true);
     return;
   }
 
-  // メンバーを追加
+    // メンバーを追加
   // 同じ名前のユーザが接続してきた場合には未対応
   members[userName] = 1;
 
   console.log(`[WebSocket] connected from ${userName} (${ip})`);
   // 全ての入室中のクライアントへ送信
-  ws.clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({
-        type: 'enter',
-        name: userName,
-      }));
-    }
+  // （オブジェクトは自動的にJSON文字列へ変換されて送信）
+  io.emit('chat message', {
+    type: 'enter',
+    name: userName,
   });
 
-
   // (2) メッセージ受信時の処理を追加
-  socket.on('message', data => {
-    console.log('[WebSocket] message from client: ' + data);
-    const req = JSON.parse(data);
+  // （受信したJSON文字列はオブジェクトへ自動的に変換）
+  socket.on('chat message', req => {
+    console.log('[WebSocket] message from client: ' + JSON.stringify(req));
     
     // bot宛か？
-    // 発展課題 12aに対応するには、まずbot宛かどうかを判定し、
+    // まずbot宛かどうかを判定し、
     // その後、メッセージ本文の内容で分岐します。
     if (req.data.startsWith('@bot ')) {
       const cmdArray = req.data.split(' ');
@@ -82,27 +70,23 @@ ws.on('connection', (socket, req) => {
         else {
           return;
         }
-        socket.send(JSON.stringify(req));
+        // 送信元のクライアントにのみ返信
+        socket.emit('chat message', req);
       }
       // bot の場合はここで終わり。
       return;
     }
 
     // bot宛でないメッセージの場合
-    // 基本課題 12-1
     // 送信元のuserNameをnameプロパティを追加
     req.name = userName;
     // 全ての入室中のクライアントへ返信
-    ws.clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(req)); // JSON文字列に変換して送信
-      }
-    });
+    io.emit('chat message', req);
   });
 
 
   // (3) 退室時の処理を追加
-  socket.on('close', () => {
+  socket.on('disconnect', () => {
     console.log(`[WebSocket] disconnected from ${userName} (${ip})`);
 
     // メンバーを削除
@@ -110,14 +94,9 @@ ws.on('connection', (socket, req) => {
     delete members[userName];
 
     // 退室したクライアントを除く全ての入室中のクライアントへ送信
-    ws.clients.forEach(client => {
-      if (client !== socket && client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({
-          type: 'leave',
-          name: userName,
-        }));
-      }
+    socket.broadcast.emit('chat message', {
+      type: 'leave',
+      name: userName,
     });
   });
 });
-*/
