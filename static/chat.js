@@ -15,7 +15,9 @@ const connect = () => {
     query: {
       userName
     },
-    reconnectionAttempts: 2,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 10000,
   });
 
   socket.on('connect', socket => {
@@ -50,10 +52,22 @@ const connect = () => {
       alert('サーバから切断されました');
       socket = null;
       resetUI();
+      return;
     }
+    console.log('切断: ' + Date());
   });
 
-  // 再接続に失敗したときの処理
+  // 再接続を試行
+  socket.io.on("reconnect_attempt", () => {
+    console.log('再接続試行: ' + Date());
+  });
+
+  // 試行の失敗
+  socket.io.on("reconnect_error", () => {
+    console.log('試行失敗: ' + Date());
+  });
+
+  // 指定数の再接続に失敗したときの処理
   socket.io.on('reconnect_failed', function() {
     alert('サーバへ接続できません');
     socket = null;

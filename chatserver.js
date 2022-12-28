@@ -9,10 +9,6 @@ const app = express();
 // 本プログラムでは、Expressはstatic以下のファイルのGETにのみ用いています。
 app.use(express.static('static'));
 
-app.get(req => {
-  console.log('url:' + req.baseUrl);
-})
-
 // ExpressとSocket.ioを同じポートで動作させる場合、
 // http.createServerにappを渡して
 // 生成されたhttp.Serverオブジェクトでlistenすること。
@@ -28,7 +24,7 @@ const members = {};
 io.on('connection', socket => {
   // （１）入室時の処理
   const ip = socket.handshake.address;
-  // ユーザ名を取得
+  // 1-1) 入室したユーザの名前を取得
   const userName = socket.handshake.query.userName;
   if (userName === undefined || userName === "") {
     console.log('Disconnected: User name not found.');
@@ -36,12 +32,12 @@ io.on('connection', socket => {
     return;
   }
 
-    // メンバーを追加
+  // メンバーを追加
   // 同じ名前のユーザが接続してきた場合には未対応
   members[userName] = 1;
 
   console.log(`[WebSocket] connected from ${userName} (${ip})`);
-  // 全ての入室中のクライアントへ送信
+  // 1-2) 全ての入室中のクライアントへ送信
   // （オブジェクトは自動的にJSON文字列へ変換されて送信）
   io.emit('chat message', {
     type: 'enter',
