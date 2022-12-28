@@ -25,7 +25,6 @@ const connect = () => {
   });
 
   // (4) メッセージ受信時の処理を追加
-  // （受信したJSON文字列は自動的にオブジェクトへ変換）
   socket.on('chat message', obj => {
     if (obj.type === 'message') {
       document.getElementById('fromServer').innerHTML += `${obj.name}: ${obj.data}<br />`;
@@ -77,7 +76,6 @@ const connect = () => {
 
 // (6) メッセージ送信処理
 const sendMessage = () => {
-  // （オブジェクトは自動的にJSON文字列へ変換されて送信）
   socket.emit('chat message', {
     type: 'message',
     data: document.getElementById('fromClient').value,

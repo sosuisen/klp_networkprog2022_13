@@ -37,15 +37,13 @@ io.on('connection', socket => {
   members[userName] = 1;
 
   console.log(`[WebSocket] connected from ${userName} (${ip})`);
-  // 1-2) 全ての入室中のクライアントへ送信
-  // （オブジェクトは自動的にJSON文字列へ変換されて送信）
+  // 1-2) 全ての入室中のクライアントへ通知
   io.emit('chat message', {
     type: 'enter',
     name: userName,
   });
 
   // (2) メッセージ受信時の処理を追加
-  // （受信したJSON文字列はオブジェクトへ自動的に変換）
   socket.on('chat message', req => {
     console.log('[WebSocket] message from client: ' + JSON.stringify(req));
     
