@@ -92,7 +92,7 @@ const sendTyping = () => {
 };
 
 // キーボードタイピング中は typing イベント送信
-document.getElementById('fromClient').addEventListener('keypress', sendTyping);
+document.getElementById('fromClient').addEventListener('keydown', sendTyping);
 
 // (1) 入退室処理
 const enterLeaveRoom = () => {
