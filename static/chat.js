@@ -15,7 +15,9 @@ const connect = () => {
     query: {
       userName
     },
-    reconnectionAttempts: 2,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 10000,
   });
 
   socket.on('connect', socket => {
@@ -23,7 +25,6 @@ const connect = () => {
   });
 
   // (4) メッセージ受信時の処理を追加
-  // （受信したJSON文字列は自動的にオブジェクトへ変換）
   socket.on('chat message', obj => {
     if (obj.type === 'message') {
       document.getElementById('fromServer').innerHTML += `${obj.name}: ${obj.data}<br />`;
@@ -50,10 +51,22 @@ const connect = () => {
       alert('サーバから切断されました');
       socket = null;
       resetUI();
+      return;
     }
+    console.log('切断: ' + Date());
   });
 
-  // 再接続に失敗したときの処理
+  // 再接続を試行
+  socket.io.on("reconnect_attempt", () => {
+    console.log('再接続試行: ' + Date());
+  });
+
+  // 試行の失敗
+  socket.io.on("reconnect_error", () => {
+    console.log('試行失敗: ' + Date());
+  });
+
+  // 指定数の再接続に失敗したときの処理
   socket.io.on('reconnect_failed', function() {
     alert('サーバへ接続できません');
     socket = null;
@@ -63,7 +76,6 @@ const connect = () => {
 
 // (6) メッセージ送信処理
 const sendMessage = () => {
-  // （オブジェクトは自動的にJSON文字列へ変換されて送信）
   socket.emit('chat message', {
     type: 'message',
     data: document.getElementById('fromClient').value,
@@ -80,7 +92,7 @@ const sendTyping = () => {
 };
 
 // キーボードタイピング中は typing イベント送信
-document.getElementById('fromClient').addEventListener('keypress', sendTyping);
+document.getElementById('fromClient').addEventListener('keydown', sendTyping);
 
 // (1) 入退室処理
 const enterLeaveRoom = () => {
