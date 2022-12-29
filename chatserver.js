@@ -95,7 +95,7 @@ io.on('connection', socket => {
 
   // (4) タイピング中というイベントを処理
   socket.on('typing', () => {
-    // 退室したクライアントを除く全ての入室中のクライアントへ送信
+    // イベントを通知してきたクライアントを除く全ての入室中のクライアントへ送信
     socket.broadcast.emit('chat message', {
       type: 'typing',
       name: userName,
