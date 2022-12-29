@@ -92,13 +92,4 @@ io.on('connection', socket => {
       name: userName,
     });
   });
-
-  // (4) タイピング中というイベントを処理
-  socket.on('typing', () => {
-    // 退室したクライアントを除く全ての入室中のクライアントへ送信
-    socket.broadcast.emit('chat message', {
-      type: 'typing',
-      name: userName,
-    });
-  });
 });
